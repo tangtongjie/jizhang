@@ -197,7 +197,7 @@ function AppContent() {
       if (error.code === 'auth/popup-blocked') {
         message = '登录窗口被浏览器拦截，请允许弹出窗口';
       } else if (error.code === 'auth/unauthorized-domain') {
-        message = '当前域名未在 Firebase 控制台授权，请检查 OAuth 授权域名设置';
+        message = `当前域名 (${window.location.hostname}) 未在 Firebase 控制台授权。请前往 Firebase 控制台 -> Authentication -> Settings -> Authorized domains 添加此域名。`;
       } else if (error.code === 'auth/popup-closed-by-user') {
         message = '登录窗口已关闭';
       } else if (error.code === 'auth/internal-error') {
