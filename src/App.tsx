@@ -282,341 +282,356 @@ function AppContent() {
     recognition.start();
   };
 
-  if (loading) {
-    return (
-      <div className="h-screen flex items-center justify-center bg-white">
-        <motion.div 
-          animate={{ scale: [1, 1.2, 1] }}
-          transition={{ repeat: Infinity, duration: 1.5 }}
-          className="w-12 h-12 bg-black rounded-full"
-        />
-      </div>
-    );
-  }
-
-  if (!user) {
-    return (
-      <div className="h-screen flex flex-col items-center justify-center bg-white px-8">
-        <div className="w-20 h-20 bg-black rounded-3xl mb-8 flex items-center justify-center">
-          <TrendingUp className="text-white" size={40} />
-        </div>
-        <h1 className="text-2xl font-bold mb-2">Smart Ledger</h1>
-        <p className="text-gray-400 text-center mb-12">极简 AI 记账，一句话掌控收支</p>
-        <Button 
-          type="button"
-          onClick={(e) => {
-            e.preventDefault();
-            handleLogin();
-          }} 
-          disabled={isLoggingIn}
-          className="w-full bg-black text-white hover:bg-gray-800 h-14 rounded-2xl text-lg font-semibold"
-        >
-          {isLoggingIn ? (
-            <motion.div 
-              animate={{ rotate: 360 }} 
-              transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
-              className="mr-2"
-            >
-              <History size={20} />
-            </motion.div>
-          ) : null}
-          {isLoggingIn ? '正在连接...' : 'Google 账号登录'}
-        </Button>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-white pb-24 font-sans text-gray-900">
+    <div className="min-h-screen bg-white font-sans text-gray-900">
       <Toaster position="top-center" richColors />
       
-      {/* Header */}
-      <header className="px-6 pt-12 pb-6 flex justify-between items-center bg-white sticky top-0 z-40">
-        <div>
-          <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-gray-400 mb-1">
-            {new Date().toLocaleDateString('zh-CN', { month: 'long', day: 'numeric', weekday: 'long' })}
-          </h2>
-          <h1 className="text-2xl font-black">
-            {activeTab === 'home' ? '智能记账' : activeTab === 'stats' ? '收支统计' : '个人中心'}
-          </h1>
-        </div>
-        {activeTab === 'home' && (
-          <div className="w-10 h-10 bg-gray-50 rounded-full flex items-center justify-center">
-            <TrendingUp size={20} className="text-black" />
-          </div>
-        )}
-      </header>
-
-      <main className="px-6">
-        <AnimatePresence mode="wait">
-          {activeTab === 'home' && (
-            <motion.div
-              key="home"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              className="space-y-8"
+      <AnimatePresence mode="wait">
+        {loading ? (
+          <motion.div 
+            key="loading"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="h-screen flex items-center justify-center bg-white"
+          >
+            <motion.div 
+              animate={{ scale: [1, 1.2, 1] }}
+              transition={{ repeat: Infinity, duration: 1.5 }}
+              className="w-12 h-12 bg-black rounded-full"
+            />
+          </motion.div>
+        ) : !user ? (
+          <motion.div 
+            key="login"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="h-screen flex flex-col items-center justify-center bg-white px-8"
+          >
+            <div className="w-20 h-20 bg-black rounded-3xl mb-8 flex items-center justify-center">
+              <TrendingUp className="text-white" size={40} />
+            </div>
+            <h1 className="text-2xl font-bold mb-2">Smart Ledger</h1>
+            <p className="text-gray-400 text-center mb-12">极简 AI 记账，一句话掌控收支</p>
+            <Button 
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                handleLogin();
+              }} 
+              disabled={isLoggingIn}
+              className="w-full bg-black text-white hover:bg-gray-800 h-14 rounded-2xl text-lg font-semibold"
             >
-              {/* Input Area */}
-              <div className="relative">
-                {!preview ? (
-                  <div className="relative group">
-                    <Input
-                      value={inputText}
-                      onChange={(e) => setInputText(e.target.value)}
-                      placeholder="例如：中午吃面15元"
-                      className="h-16 pl-6 pr-24 bg-gray-50 border-none rounded-2xl text-lg focus-visible:ring-1 focus-visible:ring-black transition-all"
-                      onKeyDown={(e) => e.key === 'Enter' && handleParse()}
-                    />
-                    <div className="absolute right-2 top-2 flex gap-1">
-                      <Button 
-                        size="icon" 
-                        variant="ghost" 
-                        onClick={startListening}
-                        className={`h-12 w-12 rounded-xl transition-colors ${isListening ? 'bg-red-50 text-red-500' : 'hover:bg-gray-100'}`}
-                      >
-                        <Mic size={20} />
-                      </Button>
-                      <Button 
-                        size="icon" 
-                        onClick={handleParse}
-                        disabled={isParsing || !inputText}
-                        className="h-12 w-12 bg-black text-white rounded-xl hover:bg-gray-800 disabled:bg-gray-200"
-                      >
-                        {isParsing ? (
-                          <motion.div 
-                            animate={{ rotate: 360 }} 
-                            transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
-                          >
-                            <History size={20} />
-                          </motion.div>
-                        ) : (
-                          <Send size={20} />
-                        )}
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
-                  <motion.div 
-                    initial={{ scale: 0.95, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    className="bg-black text-white p-6 rounded-3xl space-y-6 shadow-2xl shadow-black/10"
+              {isLoggingIn ? (
+                <motion.div 
+                  animate={{ rotate: 360 }} 
+                  transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
+                  className="mr-2"
+                >
+                  <History size={20} />
+                </motion.div>
+              ) : null}
+              {isLoggingIn ? '正在连接...' : 'Google 账号登录'}
+            </Button>
+          </motion.div>
+        ) : (
+          <motion.div 
+            key="main-app"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="pb-24"
+          >
+            {/* Header */}
+            <header className="px-6 pt-12 pb-6 flex justify-between items-center bg-white sticky top-0 z-40">
+              <div>
+                <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-gray-400 mb-1">
+                  {new Date().toLocaleDateString('zh-CN', { month: 'long', day: 'numeric', weekday: 'long' })}
+                </h2>
+                <h1 className="text-2xl font-black">
+                  {activeTab === 'home' ? '智能记账' : activeTab === 'stats' ? '收支统计' : '个人中心'}
+                </h1>
+              </div>
+              {activeTab === 'home' && (
+                <div className="w-10 h-10 bg-gray-50 rounded-full flex items-center justify-center">
+                  <TrendingUp size={20} className="text-black" />
+                </div>
+              )}
+            </header>
+
+            <main className="px-6">
+              <AnimatePresence mode="wait">
+                {activeTab === 'home' && (
+                  <motion.div
+                    key="home-tab"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    className="space-y-8"
                   >
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <Badge variant="outline" className="text-white border-white/20 mb-2 uppercase tracking-widest text-[10px]">
-                          AI 识别结果
-                        </Badge>
-                        <div className="flex items-baseline gap-2">
-                          <span className="text-4xl font-black">¥{preview.amount.toFixed(2)}</span>
-                          <span className={`text-xs font-bold px-2 py-0.5 rounded ${preview.type === 'expense' ? 'bg-red-500' : 'bg-green-500'}`}>
-                            {preview.type === 'expense' ? '支出' : '收入'}
-                          </span>
+                    {/* Input Area */}
+                    <div className="relative">
+                      {!preview ? (
+                        <div className="relative group">
+                          <Input
+                            value={inputText}
+                            onChange={(e) => setInputText(e.target.value)}
+                            placeholder="例如：中午吃面15元"
+                            className="h-16 pl-6 pr-24 bg-gray-50 border-none rounded-2xl text-lg focus-visible:ring-1 focus-visible:ring-black transition-all"
+                            onKeyDown={(e) => e.key === 'Enter' && handleParse()}
+                          />
+                          <div className="absolute right-2 top-2 flex gap-1">
+                            <Button 
+                              size="icon" 
+                              variant="ghost" 
+                              onClick={startListening}
+                              className={`h-12 w-12 rounded-xl transition-colors ${isListening ? 'bg-red-50 text-red-500' : 'hover:bg-gray-100'}`}
+                            >
+                              <Mic size={20} />
+                            </Button>
+                            <Button 
+                              size="icon" 
+                              onClick={handleParse}
+                              disabled={isParsing || !inputText}
+                              className="h-12 w-12 bg-black text-white rounded-xl hover:bg-gray-800 disabled:bg-gray-200"
+                            >
+                              {isParsing ? (
+                                <motion.div 
+                                  animate={{ rotate: 360 }} 
+                                  transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
+                                >
+                                  <History size={20} />
+                                </motion.div>
+                              ) : (
+                                <Send size={20} />
+                              )}
+                            </Button>
+                          </div>
                         </div>
+                      ) : (
+                        <motion.div 
+                          initial={{ scale: 0.95, opacity: 0 }}
+                          animate={{ scale: 1, opacity: 1 }}
+                          className="bg-black text-white p-6 rounded-3xl space-y-6 shadow-2xl shadow-black/10"
+                        >
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <Badge variant="outline" className="text-white border-white/20 mb-2 uppercase tracking-widest text-[10px]">
+                                AI 识别结果
+                              </Badge>
+                              <div className="flex items-baseline gap-2">
+                                <span className="text-4xl font-black">¥{preview.amount.toFixed(2)}</span>
+                                <span className={`text-xs font-bold px-2 py-0.5 rounded ${preview.type === 'expense' ? 'bg-red-500' : 'bg-green-500'}`}>
+                                  {preview.type === 'expense' ? '支出' : '收入'}
+                                </span>
+                              </div>
+                            </div>
+                            <Button 
+                              size="icon" 
+                              variant="ghost" 
+                              onClick={() => setPreview(null)}
+                              className="text-white/50 hover:text-white hover:bg-white/10"
+                            >
+                              <X size={24} />
+                            </Button>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-1">
+                              <span className="text-[10px] text-white/40 uppercase font-bold tracking-widest">分类</span>
+                              <div className="flex flex-wrap gap-2">
+                                <Badge className="bg-white/10 text-white hover:bg-white/20 border-none px-3 py-1">
+                                  {preview.categoryName}
+                                </Badge>
+                              </div>
+                            </div>
+                            <div className="space-y-1">
+                              <span className="text-[10px] text-white/40 uppercase font-bold tracking-widest">备注</span>
+                              <p className="text-sm font-medium">{preview.note || '无'}</p>
+                            </div>
+                          </div>
+
+                          <Button 
+                            onClick={handleConfirm}
+                            className="w-full bg-white text-black hover:bg-gray-100 h-14 rounded-2xl text-lg font-black flex gap-2"
+                          >
+                            <Check size={24} /> 确认记账
+                          </Button>
+                        </motion.div>
+                      )}
+                    </div>
+
+                    {/* Recent Transactions */}
+                    <div className="space-y-4">
+                      <div className="flex justify-between items-center">
+                        <h3 className="text-sm font-bold uppercase tracking-widest text-gray-400">最近记录</h3>
+                        <History size={16} className="text-gray-300" />
                       </div>
-                      <Button 
-                        size="icon" 
-                        variant="ghost" 
-                        onClick={() => setPreview(null)}
-                        className="text-white/50 hover:text-white hover:bg-white/10"
-                      >
-                        <X size={24} />
-                      </Button>
+                      <Card className="border-none shadow-none bg-transparent">
+                        <CardContent className="p-0">
+                          {transactions.length > 0 ? (
+                            transactions.slice(0, 10).map(t => (
+                              <div key={t.id}>
+                                <TransactionItem transaction={t} />
+                              </div>
+                            ))
+                          ) : (
+                            <div className="py-12 text-center">
+                              <p className="text-gray-300 text-sm italic">还没有记录，开始记一笔吧</p>
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+                    </div>
+                  </motion.div>
+                )}
+
+                {activeTab === 'stats' && (
+                  <motion.div
+                    key="stats-tab"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    className="space-y-8"
+                  >
+                    <Tabs defaultValue="expense" className="w-full">
+                      <TabsList className="grid w-full grid-cols-2 bg-gray-50 p-1 rounded-2xl h-12">
+                        <TabsTrigger value="expense" className="rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm font-bold">支出分析</TabsTrigger>
+                        <TabsTrigger value="income" className="rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm font-bold">收入分析</TabsTrigger>
+                      </TabsList>
+                      
+                      {['expense', 'income'].map((type) => (
+                        <TabsContent key={type} value={type} className="space-y-8 mt-6">
+                          {/* Pie Chart */}
+                          <Card className="border-none bg-gray-50 rounded-3xl overflow-hidden shadow-none">
+                            <CardHeader className="pb-0">
+                              <CardTitle className="text-sm font-bold uppercase tracking-widest text-gray-400">分类占比</CardTitle>
+                            </CardHeader>
+                            <CardContent className="h-64 pt-0">
+                              {transactions.filter(t => t.type === type).length > 0 ? (
+                                <ResponsiveContainer width="100%" height="100%">
+                                  <RePieChart>
+                                    <Pie
+                                      data={Object.entries(
+                                        transactions
+                                          .filter(t => t.type === type)
+                                          .reduce((acc, t) => {
+                                            acc[t.categoryName] = (acc[t.categoryName] || 0) + t.amount;
+                                            return acc;
+                                          }, {} as Record<string, number>)
+                                      ).map(([name, value]) => ({ name, value }))}
+                                      cx="50%"
+                                      cy="50%"
+                                      innerRadius={60}
+                                      outerRadius={80}
+                                      paddingAngle={5}
+                                      dataKey="value"
+                                    >
+                                      {[0, 1, 2, 3, 4, 5].map((_, index) => (
+                                        <Cell key={`cell-${index}`} fill={['#000000', '#404040', '#737373', '#A3A3A3', '#D4D4D4', '#E5E5E5'][index % 6]} />
+                                      ))}
+                                    </Pie>
+                                    <Tooltip />
+                                  </RePieChart>
+                                </ResponsiveContainer>
+                              ) : (
+                                <div className="h-full flex items-center justify-center text-gray-300 text-sm">暂无数据</div>
+                              )}
+                            </CardContent>
+                          </Card>
+
+                          {/* Bar Chart - Daily Trend */}
+                          <Card className="border-none bg-gray-50 rounded-3xl overflow-hidden shadow-none">
+                            <CardHeader className="pb-0">
+                              <CardTitle className="text-sm font-bold uppercase tracking-widest text-gray-400">每日趋势</CardTitle>
+                            </CardHeader>
+                            <CardContent className="h-64 pt-4">
+                              {transactions.filter(t => t.type === type).length > 0 ? (
+                                <ResponsiveContainer width="100%" height="100%">
+                                  <BarChart data={
+                                    Object.entries(
+                                      transactions
+                                        .filter(t => t.type === type)
+                                        .reduce((acc, t) => {
+                                          const date = t.date?.toDate ? t.date.toDate().toLocaleDateString() : new Date(t.date).toLocaleDateString();
+                                          acc[date] = (acc[date] || 0) + t.amount;
+                                          return acc;
+                                        }, {} as Record<string, number>)
+                                    )
+                                    .sort((a, b) => new Date(a[0]).getTime() - new Date(b[0]).getTime())
+                                    .slice(-7)
+                                    .map(([date, amount]) => ({ date: date.split('/')[1] + '/' + date.split('/')[2], amount }))
+                                  }>
+                                    <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#9CA3AF' }} />
+                                    <YAxis hide />
+                                    <Tooltip cursor={{ fill: 'transparent' }} />
+                                    <Bar dataKey="amount" fill="#000000" radius={[4, 4, 0, 0]} />
+                                  </BarChart>
+                                </ResponsiveContainer>
+                              ) : (
+                                <div className="h-full flex items-center justify-center text-gray-300 text-sm">暂无数据</div>
+                              )}
+                            </CardContent>
+                          </Card>
+                        </TabsContent>
+                      ))}
+                    </Tabs>
+                  </motion.div>
+                )}
+
+                {activeTab === 'profile' && (
+                  <motion.div
+                    key="profile-tab"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    className="space-y-8"
+                  >
+                    <div className="flex flex-col items-center py-8 space-y-4">
+                      <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-gray-50 shadow-xl">
+                        <img src={user.photoURL || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.email}`} alt="avatar" />
+                      </div>
+                      <div className="text-center">
+                        <h3 className="text-xl font-black">{user.displayName || '用户'}</h3>
+                        <p className="text-sm text-gray-400 font-medium">{user.email}</p>
+                      </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-1">
-                        <span className="text-[10px] text-white/40 uppercase font-bold tracking-widest">分类</span>
-                        <div className="flex flex-wrap gap-2">
-                          <Badge className="bg-white/10 text-white hover:bg-white/20 border-none px-3 py-1">
-                            {preview.categoryName}
-                          </Badge>
-                        </div>
-                      </div>
-                      <div className="space-y-1">
-                        <span className="text-[10px] text-white/40 uppercase font-bold tracking-widest">备注</span>
-                        <p className="text-sm font-medium">{preview.note || '无'}</p>
-                      </div>
+                      <Card className="border-none bg-gray-50 rounded-3xl p-6 text-center shadow-none">
+                        <TrendingDown size={24} className="mx-auto mb-2 text-red-500" />
+                        <span className="text-[10px] text-gray-400 uppercase font-bold tracking-widest block">本月支出</span>
+                        <span className="text-xl font-black">¥{transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0).toFixed(2)}</span>
+                      </Card>
+                      <Card className="border-none bg-gray-50 rounded-3xl p-6 text-center shadow-none">
+                        <TrendingUp size={24} className="mx-auto mb-2 text-green-500" />
+                        <span className="text-[10px] text-gray-400 uppercase font-bold tracking-widest block">本月收入</span>
+                        <span className="text-xl font-black">¥{transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0).toFixed(2)}</span>
+                      </Card>
                     </div>
 
-                    <Button 
-                      onClick={handleConfirm}
-                      className="w-full bg-white text-black hover:bg-gray-100 h-14 rounded-2xl text-lg font-black flex gap-2"
-                    >
-                      <Check size={24} /> 确认记账
-                    </Button>
+                    <div className="space-y-3">
+                      <Button 
+                        variant="outline" 
+                        onClick={handleLogout}
+                        className="w-full h-16 rounded-2xl border-gray-100 hover:bg-red-50 hover:text-red-500 hover:border-red-100 transition-all flex justify-between px-6 group"
+                      >
+                        <div className="flex items-center gap-3">
+                          <LogOut size={20} />
+                          <span className="font-bold">退出登录</span>
+                        </div>
+                        <X size={16} className="opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </Button>
+                    </div>
                   </motion.div>
                 )}
-              </div>
+              </AnimatePresence>
+            </main>
 
-              {/* Recent Transactions */}
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <h3 className="text-sm font-bold uppercase tracking-widest text-gray-400">最近记录</h3>
-                  <History size={16} className="text-gray-300" />
-                </div>
-                <Card className="border-none shadow-none bg-transparent">
-                  <CardContent className="p-0">
-                    {transactions.length > 0 ? (
-                      transactions.slice(0, 10).map(t => (
-                        <div key={t.id}>
-                          <TransactionItem transaction={t} />
-                        </div>
-                      ))
-                    ) : (
-                      <div className="py-12 text-center">
-                        <p className="text-gray-300 text-sm italic">还没有记录，开始记一笔吧</p>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </div>
-            </motion.div>
-          )}
-
-          {activeTab === 'stats' && (
-            <motion.div
-              key="stats"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              className="space-y-8"
-            >
-              <Tabs defaultValue="expense" className="w-full">
-                <TabsList className="grid w-full grid-cols-2 bg-gray-50 p-1 rounded-2xl h-12">
-                  <TabsTrigger value="expense" className="rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm font-bold">支出分析</TabsTrigger>
-                  <TabsTrigger value="income" className="rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm font-bold">收入分析</TabsTrigger>
-                </TabsList>
-                
-                {['expense', 'income'].map((type) => (
-                  <TabsContent key={type} value={type} className="space-y-8 mt-6">
-                    {/* Pie Chart */}
-                    <Card className="border-none bg-gray-50 rounded-3xl overflow-hidden shadow-none">
-                      <CardHeader className="pb-0">
-                        <CardTitle className="text-sm font-bold uppercase tracking-widest text-gray-400">分类占比</CardTitle>
-                      </CardHeader>
-                      <CardContent className="h-64 pt-0">
-                        {transactions.filter(t => t.type === type).length > 0 ? (
-                          <ResponsiveContainer width="100%" height="100%">
-                            <RePieChart>
-                              <Pie
-                                data={Object.entries(
-                                  transactions
-                                    .filter(t => t.type === type)
-                                    .reduce((acc, t) => {
-                                      acc[t.categoryName] = (acc[t.categoryName] || 0) + t.amount;
-                                      return acc;
-                                    }, {} as Record<string, number>)
-                                ).map(([name, value]) => ({ name, value }))}
-                                cx="50%"
-                                cy="50%"
-                                innerRadius={60}
-                                outerRadius={80}
-                                paddingAngle={5}
-                                dataKey="value"
-                              >
-                                {[0, 1, 2, 3, 4, 5].map((_, index) => (
-                                  <Cell key={`cell-${index}`} fill={['#000000', '#404040', '#737373', '#A3A3A3', '#D4D4D4', '#E5E5E5'][index % 6]} />
-                                ))}
-                              </Pie>
-                              <Tooltip />
-                            </RePieChart>
-                          </ResponsiveContainer>
-                        ) : (
-                          <div className="h-full flex items-center justify-center text-gray-300 text-sm">暂无数据</div>
-                        )}
-                      </CardContent>
-                    </Card>
-
-                    {/* Bar Chart - Daily Trend */}
-                    <Card className="border-none bg-gray-50 rounded-3xl overflow-hidden shadow-none">
-                      <CardHeader className="pb-0">
-                        <CardTitle className="text-sm font-bold uppercase tracking-widest text-gray-400">每日趋势</CardTitle>
-                      </CardHeader>
-                      <CardContent className="h-64 pt-4">
-                        {transactions.filter(t => t.type === type).length > 0 ? (
-                          <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={
-                              Object.entries(
-                                transactions
-                                  .filter(t => t.type === type)
-                                  .reduce((acc, t) => {
-                                    const date = t.date?.toDate ? t.date.toDate().toLocaleDateString() : new Date(t.date).toLocaleDateString();
-                                    acc[date] = (acc[date] || 0) + t.amount;
-                                    return acc;
-                                  }, {} as Record<string, number>)
-                              )
-                              .sort((a, b) => new Date(a[0]).getTime() - new Date(b[0]).getTime())
-                              .slice(-7)
-                              .map(([date, amount]) => ({ date: date.split('/')[1] + '/' + date.split('/')[2], amount }))
-                            }>
-                              <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#9CA3AF' }} />
-                              <YAxis hide />
-                              <Tooltip cursor={{ fill: 'transparent' }} />
-                              <Bar dataKey="amount" fill="#000000" radius={[4, 4, 0, 0]} />
-                            </BarChart>
-                          </ResponsiveContainer>
-                        ) : (
-                          <div className="h-full flex items-center justify-center text-gray-300 text-sm">暂无数据</div>
-                        )}
-                      </CardContent>
-                    </Card>
-                  </TabsContent>
-                ))}
-              </Tabs>
-            </motion.div>
-          )}
-
-          {activeTab === 'profile' && (
-            <motion.div
-              key="profile"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              className="space-y-8"
-            >
-              <div className="flex flex-col items-center py-8 space-y-4">
-                <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-gray-50 shadow-xl">
-                  <img src={user.photoURL || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.email}`} alt="avatar" />
-                </div>
-                <div className="text-center">
-                  <h3 className="text-xl font-black">{user.displayName || '用户'}</h3>
-                  <p className="text-sm text-gray-400 font-medium">{user.email}</p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <Card className="border-none bg-gray-50 rounded-3xl p-6 text-center shadow-none">
-                  <TrendingDown size={24} className="mx-auto mb-2 text-red-500" />
-                  <span className="text-[10px] text-gray-400 uppercase font-bold tracking-widest block">本月支出</span>
-                  <span className="text-xl font-black">¥{transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0).toFixed(2)}</span>
-                </Card>
-                <Card className="border-none bg-gray-50 rounded-3xl p-6 text-center shadow-none">
-                  <TrendingUp size={24} className="mx-auto mb-2 text-green-500" />
-                  <span className="text-[10px] text-gray-400 uppercase font-bold tracking-widest block">本月收入</span>
-                  <span className="text-xl font-black">¥{transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0).toFixed(2)}</span>
-                </Card>
-              </div>
-
-              <div className="space-y-3">
-                <Button 
-                  variant="outline" 
-                  onClick={handleLogout}
-                  className="w-full h-16 rounded-2xl border-gray-100 hover:bg-red-50 hover:text-red-500 hover:border-red-100 transition-all flex justify-between px-6 group"
-                >
-                  <div className="flex items-center gap-3">
-                    <LogOut size={20} />
-                    <span className="font-bold">退出登录</span>
-                  </div>
-                  <X size={16} className="opacity-0 group-hover:opacity-100 transition-opacity" />
-                </Button>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </main>
-
-      <Navbar activeTab={activeTab} setActiveTab={setActiveTab} />
+            <Navbar activeTab={activeTab} setActiveTab={setActiveTab} />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
