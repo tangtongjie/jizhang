@@ -182,10 +182,27 @@ function AppContent() {
   const handleLogin = async () => {
     try {
       const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
+      // Set custom parameters if needed
+      provider.setCustomParameters({ prompt: 'select_account' });
+      
+      const result = await signInWithPopup(auth, provider);
+      console.log("Login success:", result.user.email);
       toast.success('登录成功');
-    } catch (error) {
-      toast.error('登录失败');
+    } catch (error: any) {
+      console.error("Login Error:", error);
+      
+      let message = '登录失败';
+      if (error.code === 'auth/popup-blocked') {
+        message = '登录窗口被浏览器拦截，请允许弹出窗口';
+      } else if (error.code === 'auth/unauthorized-domain') {
+        message = '当前域名未在 Firebase 控制台授权，请检查 OAuth 授权域名设置';
+      } else if (error.code === 'auth/popup-closed-by-user') {
+        message = '登录窗口已关闭';
+      } else if (error.message) {
+        message = `登录失败: ${error.message}`;
+      }
+      
+      toast.error(message);
     }
   };
 
