@@ -1,0 +1,41 @@
+{
+  "entities": {
+    "Transaction": {
+      "title": "Transaction",
+      "description": "A financial transaction (income or expense).",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "The UID of the user who owns this transaction." },
+        "amount": { "type": "number", "description": "The amount of the transaction." },
+        "type": { "type": "string", "enum": ["income", "expense"], "description": "The type of transaction." },
+        "categoryId": { "type": "string", "description": "The ID of the category." },
+        "categoryName": { "type": "string", "description": "The name of the category." },
+        "note": { "type": "string", "description": "Optional note for the transaction." },
+        "date": { "type": "string", "format": "date-time", "description": "The date and time of the transaction." }
+      },
+      "required": ["userId", "amount", "type", "categoryName", "date"]
+    },
+    "Category": {
+      "title": "Category",
+      "description": "A category for transactions.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "The UID of the user who owns this category (null for default categories)." },
+        "name": { "type": "string", "description": "The name of the category." },
+        "type": { "type": "string", "enum": ["income", "expense"], "description": "The type of category." },
+        "isDefault": { "type": "boolean", "description": "Whether this is a system default category." }
+      },
+      "required": ["name", "type"]
+    }
+  },
+  "firestore": {
+    "/transactions/{transactionId}": {
+      "schema": "Transaction",
+      "description": "Collection of user transactions."
+    },
+    "/categories/{categoryId}": {
+      "schema": "Category",
+      "description": "Collection of transaction categories."
+    }
+  }
+}

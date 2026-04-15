@@ -1,0 +1,6 @@
+{
+  "name": "智能记账助手 (Smart Ledger)",
+  "description": "基于 AI 驱动的极简移动端记账应用，支持语音和文本录入，智能解析收支信息。",
+  "requestFramePermissions": ["microphone"],
+  "majorCapabilities": []
+}

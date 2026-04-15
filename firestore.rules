@@ -1,0 +1,72 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: transactions
+    // Fields:
+    //   - userId: string (required, owner UID)
+    //   - amount: number (required, positive)
+    //   - type: string (required, 'income' or 'expense')
+    //   - categoryId: string (optional)
+    //   - categoryName: string (required)
+    //   - note: string (optional, max 200 chars)
+    //   - date: timestamp (required)
+    //
+    // Collection: categories
+    // Fields:
+    //   - userId: string (optional, owner UID or null for default)
+    //   - name: string (required, max 50 chars)
+    //   - type: string (required, 'income' or 'expense')
+    //   - isDefault: bool (required)
+    //
+    // ===============================================================
+
+    // Helper Functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isDocOwner() {
+      return isAuthenticated() && request.auth.uid == resource.data.userId;
+    }
+
+    function isValidTransaction(data) {
+      return data.userId == request.auth.uid &&
+             data.amount is number && data.amount > 0 &&
+             data.type in ['income', 'expense'] &&
+             data.categoryName is string && data.categoryName.size() > 0 && data.categoryName.size() <= 50 &&
+             data.date is timestamp &&
+             (!('note' in data) || (data.note is string && data.note.size() <= 200));
+    }
+
+    function isValidCategory(data) {
+      return (data.userId == request.auth.uid || data.isDefault == true) &&
+             data.name is string && data.name.size() > 0 && data.name.size() <= 50 &&
+             data.type in ['income', 'expense'] &&
+             data.isDefault is bool;
+    }
+
+    match /transactions/{transactionId} {
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow create: if isAuthenticated() && isValidTransaction(request.resource.data);
+      allow update: if isAuthenticated() && isDocOwner() && isValidTransaction(request.resource.data);
+      allow delete: if isAuthenticated() && isDocOwner();
+    }
+
+    match /categories/{categoryId} {
+      // Allow reading default categories or user-owned categories
+      allow read: if isAuthenticated() && (resource.data.isDefault == true || resource.data.userId == request.auth.uid);
+      // Only allow users to create their own categories
+      allow create: if isAuthenticated() && request.resource.data.isDefault == false && request.resource.data.userId == request.auth.uid && isValidCategory(request.resource.data);
+      allow update: if isAuthenticated() && resource.data.userId == request.auth.uid && request.resource.data.userId == request.auth.uid && isValidCategory(request.resource.data);
+      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+    }
+  }
+}
