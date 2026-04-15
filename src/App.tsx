@@ -158,6 +158,7 @@ function AppContent() {
   const [isParsing, setIsParsing] = useState(false);
   const [preview, setPreview] = useState<AIParseResult | null>(null);
   const [isListening, setIsListening] = useState(false);
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   useEffect(() => {
     testConnection();
@@ -180,9 +181,10 @@ function AppContent() {
   }, [user]);
 
   const handleLogin = async () => {
+    if (isLoggingIn) return;
+    setIsLoggingIn(true);
     try {
       const provider = new GoogleAuthProvider();
-      // Set custom parameters if needed
       provider.setCustomParameters({ prompt: 'select_account' });
       
       const result = await signInWithPopup(auth, provider);
@@ -198,11 +200,15 @@ function AppContent() {
         message = '当前域名未在 Firebase 控制台授权，请检查 OAuth 授权域名设置';
       } else if (error.code === 'auth/popup-closed-by-user') {
         message = '登录窗口已关闭';
+      } else if (error.code === 'auth/internal-error') {
+        message = 'Firebase 内部错误，请检查网络或配置';
       } else if (error.message) {
         message = `登录失败: ${error.message}`;
       }
       
       toast.error(message);
+    } finally {
+      setIsLoggingIn(false);
     }
   };
 
@@ -296,8 +302,25 @@ function AppContent() {
         </div>
         <h1 className="text-2xl font-bold mb-2">Smart Ledger</h1>
         <p className="text-gray-400 text-center mb-12">极简 AI 记账，一句话掌控收支</p>
-        <Button onClick={handleLogin} className="w-full bg-black text-white hover:bg-gray-800 h-14 rounded-2xl text-lg font-semibold">
-          Google 账号登录
+        <Button 
+          type="button"
+          onClick={(e) => {
+            e.preventDefault();
+            handleLogin();
+          }} 
+          disabled={isLoggingIn}
+          className="w-full bg-black text-white hover:bg-gray-800 h-14 rounded-2xl text-lg font-semibold"
+        >
+          {isLoggingIn ? (
+            <motion.div 
+              animate={{ rotate: 360 }} 
+              transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
+              className="mr-2"
+            >
+              <History size={20} />
+            </motion.div>
+          ) : null}
+          {isLoggingIn ? '正在连接...' : 'Google 账号登录'}
         </Button>
       </div>
     );
