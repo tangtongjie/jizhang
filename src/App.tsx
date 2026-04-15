@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Component, ReactNode, ErrorInfo } from 'react';
 import { auth } from './lib/firebase';
 import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut, User } from 'firebase/auth';
 import { Toaster, toast } from 'sonner';
@@ -92,9 +92,63 @@ const TransactionItem = ({ transaction }: { transaction: Transaction }) => {
   );
 };
 
+// --- Error Boundary ---
+interface ErrorBoundaryProps {
+  children: ReactNode;
+}
+
+interface ErrorBoundaryState {
+  hasError: boolean;
+  error: Error | null;
+}
+
+class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  constructor(props: ErrorBoundaryProps) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error("Uncaught error:", error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="h-screen flex flex-col items-center justify-center bg-white px-8 text-center">
+          <div className="w-16 h-16 bg-red-50 text-red-500 rounded-2xl mb-6 flex items-center justify-center">
+            <X size={32} />
+          </div>
+          <h1 className="text-xl font-bold mb-2">出错了</h1>
+          <p className="text-gray-500 text-sm mb-8 max-w-xs">
+            {this.state.error?.message || "应用程序发生意外错误"}
+          </p>
+          <Button onClick={() => window.location.reload()} className="bg-black text-white rounded-xl px-8">
+            重试
+          </Button>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
 // --- Main App ---
 
 export default function App() {
+  return (
+    <ErrorBoundary>
+      <AppContent />
+    </ErrorBoundary>
+  );
+}
+
+function AppContent() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('home');
